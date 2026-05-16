@@ -74,14 +74,22 @@ DevicePage {
 
 					required property string name
 					required property real power
+					required property real current
 
 					headerText: name
 					model: QuantityObjectModel {
-						// The current, energy and charging time columns are only relevant to
-						// the summary and not the individual devices, so just add empty values
-						// here to pad out the remaining columns.
+						// Show per-phase power, and per-phase current when the charger
+						// publishes it (.../Ac/Lx/Current). The energy and charging time
+						// columns are only relevant to the summary row, so pad them out.
 						QuantityObject { object: tableRow; key: "power"; unit: VenusOS.Units_Watt }
-						QuantityObject { hidden: true }
+						QuantityObject {
+							object: tableRow
+							key: "current"
+							unit: VenusOS.Units_Amp
+							// Hide cell content (column stays for alignment) when this
+							// charger does not provide per-phase current readings.
+							hidden: isNaN(tableRow.current)
+						}
 						QuantityObject { hidden: true }
 						QuantityObject { hidden: true }
 					}
@@ -111,6 +119,10 @@ DevicePage {
 							uid: phaseObject.uid + "/Power"
 							onValueChanged: phaseModel.setValue(phaseObject.index, PhaseModel.PowerRole, value)
 							onValidChanged: if (valid) phaseModel.phaseCount = Math.max(phaseModel.phaseCount, phaseObject.index + 1)
+						}
+						readonly property VeQuickItem _current: VeQuickItem {
+							uid: phaseObject.uid + "/Current"
+							onValueChanged: phaseModel.setValue(phaseObject.index, PhaseModel.CurrentRole, value)
 						}
 					}
 				}
